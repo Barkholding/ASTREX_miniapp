@@ -19,13 +19,13 @@ let strings = {
     btn_get_message: "✨ Получить послание",
     tarot_pos_upright: "Прямое положение",
     tarot_pos_reversed: "Перевернутое положение",
-    data_saved: "Данные сохранены!"
+    data_saved: "Данные сохранены!",
+    shuffling_text: "Прислушиваюсь к энергиям..."
 };
 let userId = null;
 
 // ==========================================
 // CONFIGURATION: Set your API URL here!
-// If you are using Ngrok, put the https URL here.
 // ==========================================
 const API_BASE = "";
 
@@ -49,7 +49,7 @@ async function init() {
         if (langBadge) langBadge.innerText = userData.language?.toUpperCase() || 'RU';
         updateUI();
     } catch (e) {
-        console.error('Init error (using fallbacks):', e);
+        console.warn('Init error (using local fallbacks):', e);
         updateUI();
     }
 }
@@ -96,14 +96,19 @@ async function loadTarotStatus() {
         if (data.pulled) {
             showTarotResult(data);
         } else {
-            const tr = document.getElementById('tarot-result');
-            const pb = document.getElementById('pull-tarot-btn');
-            if (tr) tr.classList.add('hidden');
-            if (pb) pb.classList.remove('hidden');
+            resetTarotView();
         }
     } catch (e) {
-        console.warn('Tarot status fetch failed, user probably needs to pull a card.');
+        console.warn('Tarot status: API offline, enabling Demo Mode for pulls.');
+        resetTarotView();
     }
+}
+
+function resetTarotView() {
+    const tr = document.getElementById('tarot-result');
+    const pb = document.getElementById('pull-tarot-btn');
+    if (tr) tr.classList.add('hidden');
+    if (pb) pb.classList.remove('hidden');
 }
 
 function showTarotResult(data) {
@@ -129,11 +134,27 @@ function showTarotResult(data) {
     }
 }
 
-// Start everything when DOM is ready
+async function tryDemoPull() {
+    try {
+        const response = await fetch('tarot_data.json');
+        const tarotData = await response.json();
+        const keys = Object.keys(tarotData);
+        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+        const card = tarotData[randomKey];
+
+        return {
+            card: card,
+            is_upright: Math.random() > 0.3 // 70% chance of being upright
+        };
+    } catch (e) {
+        console.error('Demo Mode failed:', e);
+        return null;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Astrex App Loaded');
 
-    // Initialize elements
     views = {
         home: document.getElementById('view-home'),
         tarot: document.getElementById('view-tarot'),
@@ -158,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mCard = document.getElementById('get-message-card');
     if (mCard) {
         mCard.addEventListener('click', () => {
-            const msg = strings.btn_get_message + (strings.about_text ? ": " + strings.about_text.split('\n')[0] : " ✨");
+            const msg = (strings.btn_get_message || "✨") + (strings.about_text ? ": " + strings.about_text.split('\n')[0] : " ✨");
             if (tg) tg.showAlert(msg); else alert(msg);
         });
     }
@@ -171,19 +192,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const shuffling = document.getElementById('tarot-shuffling');
             if (shuffling) shuffling.classList.remove('hidden');
 
+            let data = null;
             try {
                 const res = await fetch(`${API_BASE}/api/tarot/pull/${userId}`, { method: 'POST' });
-                const data = await res.json();
-                setTimeout(() => {
-                    if (shuffling) shuffling.classList.add('hidden');
-                    showTarotResult(data);
-                }, 1500);
+                if (res.ok) data = await res.json();
             } catch (e) {
-                if (tg) tg.showAlert('Connect your backend API to pull real cards!');
-                else console.error('Pull error:', e);
-                pullBtn.classList.remove('hidden');
-                if (shuffling) shuffling.classList.add('hidden');
+                console.warn('API pull failed, switching to Demo Mode...');
             }
+
+            if (!data) {
+                data = await tryDemoPull();
+            }
+
+            setTimeout(() => {
+                if (shuffling) shuffling.classList.add('hidden');
+                if (data) {
+                    showTarotResult(data);
+                } else {
+                    tg?.showAlert('Demo card pool unavailable. Please check your internet.');
+                    pullBtn.classList.remove('hidden');
+                }
+            }, 1500);
         });
     }
 
@@ -207,11 +236,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             body: JSON.stringify(data)
                         });
                         if (res.ok) {
-                            if (tg) tg.showAlert('Сохранено!'); else alert('Сохранено!');
+                            if (tg) tg.showAlert('Сохранено (в API)!'); else alert('Сохранено!');
                             switchView('home');
+                            init(); // Reload
+                        } else {
+                            throw new Error("Save failed");
                         }
                     } catch (e) {
-                        if (tg) tg.showAlert('Backend not reachable. Data not saved.');
+                        // Just pretend we saved it in demo mode
+                        if (tg) tg.showAlert('Сохранено (режим демо)!');
+                        else alert('Сохранено!');
+                        switchView('home');
+                        init(); // Reload
                     }
                 }
             };
