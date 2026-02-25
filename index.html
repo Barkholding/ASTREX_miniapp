@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTREX</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <div class="logo">✨ ASTREX</div>
+            <div id="lang-indicator" class="lang-badge">RU</div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-view">
+            <!-- Views will be injected here -->
+            <div id="view-home" class="view active">
+                <div class="hero">
+                    <h1 id="greeting">Привет, друг! 👋</h1>
+                    <p id="sub-greeting">Добро пожаловать в мир звездных посланий.</p>
+                </div>
+
+                <div class="action-card" id="get-message-card">
+                    <div class="card-icon">🌌</div>
+                    <div class="card-content">
+                        <h3 id="btn-message-label">Послание Вселенной</h3>
+                        <p id="btn-message-desc">Узнай, что подготовили звезды</p>
+                    </div>
+                </div>
+
+                <div class="action-card" id="tarot-card">
+                    <div class="card-icon">🃏</div>
+                    <div class="card-content">
+                        <h3 id="btn-tarot-label">Карта дня</h3>
+                        <p id="btn-tarot-desc">Мудрость Таро на сегодня</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarot View -->
+            <div id="view-tarot" class="view">
+                <div class="back-btn">← Назад</div>
+                <div id="tarot-container">
+                    <!-- Tarot card result -->
+                    <div id="tarot-shuffling" class="hidden">
+                        <div class="loader"></div>
+                        <p>Прислушиваюсь к энергиям...</p>
+                    </div>
+                    <div id="tarot-result" class="hidden">
+                        <img id="tarot-img" src="" alt="Card">
+                        <h2 id="tarot-name"></h2>
+                        <span id="tarot-pos" class="badge"></span>
+                        <p id="tarot-meaning"></p>
+                        <button id="tarot-expand-btn" class="secondary-btn hidden">Подробное разъяснение 💎</button>
+                    </div>
+                    <button id="pull-tarot-btn" class="primary-btn">Открыть карту дня</button>
+                </div>
+            </div>
+
+            <!-- Personalization View -->
+            <div id="view-personalization" class="view">
+                <div class="back-btn">← Назад</div>
+                <h2 id="personalize-title">Персонализация</h2>
+                <div class="form-group">
+                    <label>Дата рождения</label>
+                    <input type="text" id="birth-date" placeholder="01.01.1990">
+                </div>
+                <div class="form-group">
+                    <label>Время рождения</label>
+                    <input type="text" id="birth-time" placeholder="12:00">
+                </div>
+                <div class="form-group">
+                    <label>Место рождения</label>
+                    <input type="text" id="birth-region" placeholder="Город, регион">
+                </div>
+                <button id="save-personalization" class="primary-btn">Сохранить данные</button>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="home">
+                <span class="icon">🏠</span>
+                <span class="label">Главная</span>
+            </button>
+            <button class="nav-item" data-view="tarot">
+                <span class="icon">🃏</span>
+                <span class="label">Таро</span>
+            </button>
+            <button class="nav-item" data-view="personalization">
+                <span class="icon">⚙️</span>
+                <span class="label">Профиль</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
