@@ -14,14 +14,80 @@ let userData = {
     birth_time: '',
     birth_region: ''
 };
-let strings = {
-    start_greeting: "Привет, {name}! 👋",
-    btn_get_message: "✨ Получить послание",
-    tarot_pos_upright: "Прямое положение",
-    tarot_pos_reversed: "Перевернутое положение",
-    data_saved: "Данные сохранены!",
-    shuffling_text: "Прислушиваюсь к энергиям..."
+
+const UI_LOCALIZATIONS = {
+    ru: {
+        start_greeting: "Привет, {name}! 👋",
+        btn_message_label: "Послание Вселенной",
+        btn_message_desc: "Узнай, что подготовили звезды",
+        btn_tarot_label: "Карта дня",
+        btn_tarot_desc: "Мудрость Таро на сегодня",
+        shuffling_text: "Прислушиваюсь к энергиям...",
+        btn_pull_tarot: "Открыть карту дня",
+        tarot_pos_upright: "Прямое положение",
+        tarot_pos_reversed: "Перевернутое положение",
+        tarot_expand_btn: "Подробное разъяснение 💎",
+        personalize_title: "Персонализация",
+        label_birth_date: "Дата рождения",
+        label_birth_time: "Время рождения",
+        label_birth_region: "Место рождения",
+        btn_save: "Сохранить данные",
+        nav_home: "Главная",
+        nav_tarot: "Таро",
+        nav_profile: "Профиль",
+        data_saved: "Данные сохранены!",
+        confirm_save: "Сохранить данные?",
+        btn_get_message: "✨ Получить послание"
+    },
+    en: {
+        start_greeting: "Hello, {name}! 👋",
+        btn_message_label: "Message from Universe",
+        btn_message_desc: "Find out what stars prepared",
+        btn_tarot_label: "Card of the Day",
+        btn_tarot_desc: "Tarot wisdom for today",
+        shuffling_text: "Listening to energies...",
+        btn_pull_tarot: "Open card of the day",
+        tarot_pos_upright: "Upright",
+        tarot_pos_reversed: "Reversed",
+        tarot_expand_btn: "Detailed Explanation 💎",
+        personalize_title: "Personalization",
+        label_birth_date: "Birth Date",
+        label_birth_time: "Birth Time",
+        label_birth_region: "Birth Place",
+        btn_save: "Save Data",
+        nav_home: "Home",
+        nav_tarot: "Tarot",
+        nav_profile: "Profile",
+        data_saved: "Data saved!",
+        confirm_save: "Save data?",
+        btn_get_message: "✨ Get Message"
+    },
+    ka: {
+        start_greeting: "გამარჯობა, {name}! 👋",
+        btn_message_label: "სამყაროს გზავნილი",
+        btn_message_desc: "გაიგე რა მოგიმზადეს ვარსკვლავებმა",
+        btn_tarot_label: "დღის ბარათი",
+        btn_tarot_desc: "ტაროს სიბრძნე დღეისთვის",
+        shuffling_text: "ვუსმენთ ენერგიებს...",
+        btn_pull_tarot: "გახსენი დღის ბარათი",
+        tarot_pos_upright: "პირდაპირი პოზიცია",
+        tarot_pos_reversed: "ამობრუნებული პოზიცია",
+        tarot_expand_btn: "დეტალური განმარტება 💎",
+        personalize_title: "პერსონალიზაცია",
+        label_birth_date: "დაბადების თარიღი",
+        label_birth_time: "დაბადების დრო",
+        label_birth_region: "დაბადების ადგილი",
+        btn_save: "მონაცემების შენახვა",
+        nav_home: "მთავარი",
+        nav_tarot: "ტარო",
+        nav_profile: "პროფილი",
+        data_saved: "მონაცემები შენახულია!",
+        confirm_save: "გნებავთ მონაცემების შენახვა?",
+        btn_get_message: "✨ მიიღე შეტყობინება"
+    }
 };
+
+let strings = UI_LOCALIZATIONS['ru'];
 let userId = null;
 
 // ==========================================
@@ -55,10 +121,51 @@ async function init() {
 }
 
 function updateUI() {
+    const lang = userData?.language || 'ru';
+    strings = UI_LOCALIZATIONS[lang] || UI_LOCALIZATIONS['ru'];
+
     const name = tg?.initDataUnsafe?.user?.first_name || 'друг';
-    if (greeting) {
-        greeting.innerText = (strings.start_greeting || "Привет!").replace('{name}', name);
+
+    // Header & Home
+    if (greeting) greeting.innerText = (strings.start_greeting).replace('{name}', name);
+    if (langBadge) langBadge.innerText = lang.toUpperCase();
+
+    const elements = {
+        'sub-greeting': strings.btn_message_desc,
+        'btn-message-label': strings.btn_message_label,
+        'btn-message-desc': strings.btn_message_desc,
+        'btn-tarot-label': strings.btn_tarot_label,
+        'btn-tarot-desc': strings.btn_tarot_desc,
+        'personalize-title': strings.personalize_title,
+        'save-personalization': strings.btn_save,
+        'pull-tarot-btn': strings.btn_pull_tarot,
+        'tarot-expand-btn': strings.tarot_expand_btn
+    };
+
+    for (const [id, text] of Object.entries(elements)) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
     }
+
+    // Form Labels
+    const labels = document.querySelectorAll('.form-group label');
+    if (labels.length >= 3) {
+        labels[0].innerText = strings.label_birth_date;
+        labels[1].innerText = strings.label_birth_time;
+        labels[2].innerText = strings.label_birth_region;
+    }
+
+    // Bottom Nav
+    const navItems = document.querySelectorAll('.nav-item .label');
+    if (navItems.length >= 3) {
+        navItems[0].innerText = strings.nav_home;
+        navItems[1].innerText = strings.nav_tarot;
+        navItems[2].innerText = strings.nav_profile;
+    }
+
+    // Shuffling text
+    const shufflingP = document.querySelector('#tarot-shuffling p');
+    if (shufflingP) shufflingP.innerText = strings.shuffling_text;
 
     const bDate = document.getElementById('birth-date');
     const bTime = document.getElementById('birth-time');
@@ -163,6 +270,25 @@ document.addEventListener('DOMContentLoaded', () => {
     greeting = document.getElementById('greeting');
     langBadge = document.getElementById('lang-indicator');
 
+    // Language Toggle
+    if (langBadge) {
+        langBadge.addEventListener('click', () => {
+            const langs = ['ru', 'en', 'ka'];
+            let currentIdx = langs.indexOf(userData.language || 'ru');
+            if (currentIdx === -1) currentIdx = 0;
+            const nextIdx = (currentIdx + 1) % langs.length;
+            userData.language = langs[nextIdx];
+            updateUI();
+
+            // Optionally persist to API
+            fetch(`${API_BASE}/api/personalize/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: userData.language })
+            }).catch(e => console.warn('Lang persistence failed', e));
+        });
+    }
+
     // Navigation
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => switchView(btn.getAttribute('data-view')));
@@ -179,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mCard = document.getElementById('get-message-card');
     if (mCard) {
         mCard.addEventListener('click', () => {
-            const msg = (strings.btn_get_message || "✨") + (strings.about_text ? ": " + strings.about_text.split('\n')[0] : " ✨");
+            const msg = (strings.btn_get_message || "✨ Получить послание");
             if (tg) tg.showAlert(msg); else alert(msg);
         });
     }
@@ -226,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 birth_region: document.getElementById('birth-region').value
             };
 
-            const confirmMsg = "Сохранить данные?";
+            const confirmMsg = strings.confirm_save;
             const saveAction = async (ok) => {
                 if (ok) {
                     try {
@@ -236,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             body: JSON.stringify(data)
                         });
                         if (res.ok) {
-                            if (tg) tg.showAlert('Сохранено (в API)!'); else alert('Сохранено!');
+                            if (tg) tg.showAlert(strings.data_saved); else alert(strings.data_saved);
                             switchView('home');
                             init(); // Reload
                         } else {
@@ -244,8 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } catch (e) {
                         // Just pretend we saved it in demo mode
-                        if (tg) tg.showAlert('Сохранено (режим демо)!');
-                        else alert('Сохранено!');
+                        if (tg) tg.showAlert(strings.data_saved + ' (demo)');
+                        else alert(strings.data_saved);
                         switchView('home');
                         init(); // Reload
                     }

@@ -47,6 +47,16 @@ header {
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.lang-badge:hover {
+    background: #e5e5ea;
+}
+
+.lang-badge:active {
+    transform: scale(0.95);
 }
 
 main {
