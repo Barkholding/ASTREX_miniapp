@@ -4,13 +4,25 @@ function setupTelegramTheme() {
     if (!tg) return;
     try {
         tg.expand();
+        if (tg.requestFullscreen) {
+            tg.requestFullscreen();
+        }
         tg.ready();
         tg.enableClosingConfirmation();
-
-        // Colors for seamless look
         tg.setHeaderColor('#ffffff');
         tg.setBackgroundColor('#ffffff');
     } catch (e) { console.error("TG setup error", e); }
+}
+
+function triggerFullscreen() {
+    console.log('Attempting fullscreen...');
+    if (tg?.requestFullscreen) {
+        tg.requestFullscreen();
+    } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(e => {
+            console.warn('DOM Fullscreen failed:', e);
+        });
+    }
 }
 
 setupTelegramTheme();
@@ -305,6 +317,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(e => console.warn('Lang persistence failed', e));
         });
     }
+
+    // Trigger Fullscreen on first interaction
+    const handleFirstTouch = () => {
+        triggerFullscreen();
+        document.removeEventListener('touchstart', handleFirstTouch);
+        document.removeEventListener('click', handleFirstTouch);
+    };
+    document.addEventListener('touchstart', handleFirstTouch);
+    document.addEventListener('click', handleFirstTouch);
 
     // Navigation
     document.querySelectorAll('.nav-item').forEach(btn => {
