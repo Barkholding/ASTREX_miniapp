@@ -36,6 +36,8 @@ let userData = {
     birth_region: ''
 };
 
+let universeMessages = null;
+
 const UI_LOCALIZATIONS = {
     ru: {
         start_greeting: "Привет, {name}! 👋",
@@ -58,7 +60,8 @@ const UI_LOCALIZATIONS = {
         nav_profile: "Профиль",
         data_saved: "Данные сохранены!",
         confirm_save: "Сохранить данные?",
-        btn_get_message: "✨ Получить послание"
+        btn_get_message: "✨ Получить послание",
+        universe_title: "Послание Вселенной 🌌"
     },
     en: {
         start_greeting: "Hello, {name}! 👋",
@@ -81,7 +84,8 @@ const UI_LOCALIZATIONS = {
         nav_profile: "Profile",
         data_saved: "Data saved!",
         confirm_save: "Save data?",
-        btn_get_message: "✨ Get Message"
+        btn_get_message: "✨ Get Message",
+        universe_title: "Message from Universe 🌌"
     },
     ka: {
         start_greeting: "გამარჯობა, {name}! 👋",
@@ -98,14 +102,14 @@ const UI_LOCALIZATIONS = {
         label_birth_date: "დაბადების თარიღი",
         label_birth_time: "დაბადების დრო",
         label_birth_region: "დაბადების ადგილი",
-        label_birth_region: "დაბადების ადგილი",
         btn_save: "მონაცემების შენახვა",
         nav_home: "მთავარი",
         nav_tarot: "ტარო",
         nav_profile: "პროფილი",
         data_saved: "მონაცემები შენახულია!",
         confirm_save: "გნებავთ მონაცემების შენახვა?",
-        btn_get_message: "✨ მიიღე შეტყობინება"
+        btn_get_message: "✨ მიიღე შეტყობინება",
+        universe_title: "სამყაროს გზავნილი 🌌"
     }
 };
 
@@ -126,26 +130,37 @@ async function init() {
     userId = tg?.initDataUnsafe?.user?.id || 5187224134;
     console.log('Initializing for user:', userId);
 
+    // Initial language detection from Telegram
+    if (!localStorage.getItem(`astre_user_${userId}`) && tg?.initDataUnsafe?.user?.language_code) {
+        const tgLang = tg.initDataUnsafe.user.language_code;
+        if (['ru', 'en', 'ka'].includes(tgLang)) {
+            userData.language = tgLang;
+        }
+    }
+
     // Load from LocalStorage as immediate fallback
     const localData = localStorage.getItem(`astre_user_${userId}`);
     if (localData) {
         try {
             userData = { ...userData, ...JSON.parse(localData) };
-            console.log('Loaded from LocalStorage:', userData);
             updateUI();
         } catch (e) { console.warn("LS parse error", e); }
     }
+
+    // Load messages list
+    try {
+        const msgRes = await fetch('messages.json');
+        universeMessages = await msgRes.json();
+    } catch (e) { console.warn("Could not load universe messages", e); }
 
     try {
         const response = await fetch(`${API_BASE}/api/init/${userId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
-        console.log('User data received from API:', data);
 
         if (data.user) {
             userData = { ...userData, ...data.user };
-            // Sync to LocalStorage
             localStorage.setItem(`astre_user_${userId}`, JSON.stringify(userData));
         }
         if (data.strings) strings = data.strings;
@@ -164,7 +179,6 @@ function updateUI() {
 
     const name = tg?.initDataUnsafe?.user?.first_name || 'друг';
 
-    // Header & Home
     if (greeting) {
         const template = strings.start_greeting || (lang === 'en' ? "Hello, {name}! 👋" : "Привет, {name}! 👋");
         greeting.innerText = template.replace('{name}', name);
@@ -188,25 +202,13 @@ function updateUI() {
         if (el) el.innerText = text;
     }
 
-    // Form Labels
-    const labels = document.querySelectorAll('.form-group label');
-    if (labels.length >= 3) {
-        labels[0].innerText = strings.label_birth_date;
-        labels[1].innerText = strings.label_birth_time;
-        labels[2].innerText = strings.label_birth_region;
-    }
-
-    // Bottom Nav
+    // Bottom Nav check
     const navItems = document.querySelectorAll('.nav-item .label');
     if (navItems.length >= 3) {
         navItems[0].innerText = strings.nav_home;
         navItems[1].innerText = strings.nav_tarot;
         navItems[2].innerText = strings.nav_profile;
     }
-
-    // Shuffling text
-    const shufflingP = document.querySelector('#tarot-shuffling p');
-    if (shufflingP) shufflingP.innerText = strings.shuffling_text;
 
     const bDate = document.getElementById('birth-date');
     const bTime = document.getElementById('birth-time');
@@ -218,7 +220,6 @@ function updateUI() {
 }
 
 function switchView(viewId) {
-    console.log('Switching view:', viewId);
     Object.keys(views).forEach(key => {
         if (views[key]) {
             views[key].classList.remove('active');
@@ -247,7 +248,6 @@ async function loadTarotStatus() {
             resetTarotView();
         }
     } catch (e) {
-        console.warn('Tarot status: API offline, enabling Demo Mode for pulls.');
         resetTarotView();
     }
 }
@@ -295,14 +295,35 @@ async function tryDemoPull() {
             is_upright: Math.random() > 0.3 // 70% chance of being upright
         };
     } catch (e) {
-        console.error('Demo Mode failed:', e);
         return null;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Astrex App Loaded');
+// Logic for Universe Message
+function showUniverseMessage() {
+    const lang = userData.language || 'ru';
+    if (!universeMessages) {
+        const fallback = (lang === 'en' ? "Stars are hidden by clouds. Try later." : "Звезды скрыты облаками. Попробуйте позже.");
+        if (tg) tg.showAlert(fallback); else alert(fallback);
+        return;
+    }
 
+    const isPremium = !!userData.subscription_expiry;
+    const pool = isPremium ? [...universeMessages.free[lang], ...universeMessages.premium[lang]] : universeMessages.free[lang];
+    const message = pool[Math.floor(Math.random() * pool.length)];
+
+    if (tg) {
+        tg.showPopup({
+            title: strings.universe_title,
+            message: message,
+            buttons: [{ type: 'ok' }]
+        });
+    } else {
+        alert(message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
     views = {
         home: document.getElementById('view-home'),
         tarot: document.getElementById('view-tarot'),
@@ -311,35 +332,28 @@ document.addEventListener('DOMContentLoaded', () => {
     greeting = document.getElementById('greeting');
     langBadge = document.getElementById('lang-indicator');
 
-    // Language Toggle
     if (langBadge) {
         langBadge.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Language badge clicked');
             const langs = ['ru', 'en', 'ka'];
             let currentLang = userData.language || 'ru';
             let currentIdx = langs.indexOf(currentLang);
             if (currentIdx === -1) currentIdx = 0;
 
-            const nextIdx = (currentIdx + 1) % langs.length;
-            const nextLang = langs[nextIdx];
-
-            console.log(`Switching lang from ${currentLang} to ${nextLang}`);
+            const nextLang = langs[(currentIdx + 1) % langs.length];
             userData.language = nextLang;
 
             updateUI();
+            localStorage.setItem(`astre_user_${userId}`, JSON.stringify(userData));
 
-            // Persist to API
             fetch(`${API_BASE}/api/personalize/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ language: nextLang })
-            }).then(r => console.log('Lang saved:', r.ok))
-                .catch(e => console.warn('Lang persistence failed', e));
+            });
         });
     }
 
-    // Trigger Fullscreen on first interaction
     const handleFirstTouch = () => {
         triggerFullscreen();
         document.removeEventListener('touchstart', handleFirstTouch);
@@ -348,7 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchstart', handleFirstTouch);
     document.addEventListener('click', handleFirstTouch);
 
-    // Navigation
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => switchView(btn.getAttribute('data-view')));
     });
@@ -357,19 +370,17 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => switchView('home'));
     });
 
-    // Home screen cards
     const tCard = document.getElementById('tarot-card');
     if (tCard) tCard.addEventListener('click', () => switchView('tarot'));
 
     const mCard = document.getElementById('get-message-card');
     if (mCard) {
-        mCard.addEventListener('click', () => {
-            const msg = (strings.btn_get_message || "✨ Получить послание");
-            if (tg) tg.showAlert(msg); else alert(msg);
+        mCard.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showUniverseMessage();
         });
     }
 
-    // Tarot Pull
     const pullBtn = document.getElementById('pull-tarot-btn');
     if (pullBtn) {
         pullBtn.addEventListener('click', async () => {
@@ -381,27 +392,21 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`${API_BASE}/api/tarot/pull/${userId}`, { method: 'POST' });
                 if (res.ok) data = await res.json();
-            } catch (e) {
-                console.warn('API pull failed, switching to Demo Mode...');
-            }
+            } catch (e) { }
 
-            if (!data) {
-                data = await tryDemoPull();
-            }
+            if (!data) data = await tryDemoPull();
 
             setTimeout(() => {
                 if (shuffling) shuffling.classList.add('hidden');
-                if (data) {
-                    showTarotResult(data);
-                } else {
-                    tg?.showAlert('Demo card pool unavailable. Please check your internet.');
+                if (data) showTarotResult(data);
+                else {
+                    tg?.showAlert('Demo card pool unavailable.');
                     pullBtn.classList.remove('hidden');
                 }
             }, 1500);
         });
     }
 
-    // Personalization Save
     const saveBtn = document.getElementById('save-personalization');
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
@@ -421,23 +426,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             body: JSON.stringify({ ...data, language: userData.language })
                         });
 
-                        // Save locally regardless of API status
                         userData = { ...userData, ...data };
                         localStorage.setItem(`astre_user_${userId}`, JSON.stringify(userData));
 
-                        if (res.ok) {
-                            if (tg) tg.showAlert(strings.data_saved); else alert(strings.data_saved);
-                            switchView('home');
-                            init(); // Reload
-                        } else {
-                            throw new Error("Save failed");
-                        }
-                    } catch (e) {
-                        // Just pretend we saved it in demo mode
-                        if (tg) tg.showAlert(strings.data_saved + ' (demo)');
-                        else alert(strings.data_saved);
+                        if (tg) tg.showAlert(strings.data_saved); else alert(strings.data_saved);
                         switchView('home');
-                        init(); // Reload
+                    } catch (e) {
+                        userData = { ...userData, ...data };
+                        localStorage.setItem(`astre_user_${userId}`, JSON.stringify(userData));
+                        if (tg) tg.showAlert(strings.data_saved); else alert(strings.data_saved);
+                        switchView('home');
                     }
                 }
             };
@@ -447,6 +445,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Run remote init
     init();
 });
