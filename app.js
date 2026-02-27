@@ -98,6 +98,7 @@ const UI_LOCALIZATIONS = {
         label_birth_date: "დაბადების თარიღი",
         label_birth_time: "დაბადების დრო",
         label_birth_region: "დაბადების ადგილი",
+        label_birth_region: "დაბადების ადგილი",
         btn_save: "მონაცემების შენახვა",
         nav_home: "მთავარი",
         nav_tarot: "ტარო",
@@ -125,23 +126,33 @@ async function init() {
     userId = tg?.initDataUnsafe?.user?.id || 5187224134;
     console.log('Initializing for user:', userId);
 
+    // Load from LocalStorage as immediate fallback
+    const localData = localStorage.getItem(`astre_user_${userId}`);
+    if (localData) {
+        try {
+            userData = { ...userData, ...JSON.parse(localData) };
+            console.log('Loaded from LocalStorage:', userData);
+            updateUI();
+        } catch (e) { console.warn("LS parse error", e); }
+    }
+
     try {
         const response = await fetch(`${API_BASE}/api/init/${userId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
-        console.log('User data received:', data);
+        console.log('User data received from API:', data);
 
-        if (data.user) userData = { ...userData, ...data.user };
+        if (data.user) {
+            userData = { ...userData, ...data.user };
+            // Sync to LocalStorage
+            localStorage.setItem(`astre_user_${userId}`, JSON.stringify(userData));
+        }
         if (data.strings) strings = data.strings;
 
-        if (langBadge) {
-            const currentLang = userData.language || 'ru';
-            langBadge.innerText = currentLang.toUpperCase();
-        }
         updateUI();
     } catch (e) {
-        console.warn('Init error (using local fallbacks):', e);
+        console.warn('Init API error (using local fallbacks):', e);
         if (tg) tg.expand();
         updateUI();
     }
@@ -407,8 +418,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         const res = await fetch(`${API_BASE}/api/personalize/${userId}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(data)
+                            body: JSON.stringify({ ...data, language: userData.language })
                         });
+
+                        // Save locally regardless of API status
+                        userData = { ...userData, ...data };
+                        localStorage.setItem(`astre_user_${userId}`, JSON.stringify(userData));
+
                         if (res.ok) {
                             if (tg) tg.showAlert(strings.data_saved); else alert(strings.data_saved);
                             switchView('home');
