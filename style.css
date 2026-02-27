@@ -1,10 +1,10 @@
 :root {
-    --primary-color: #007aff;
-    /* ASTREX Blue */
-    --bg-color: #ffffff;
-    --text-color: #1c1c1e;
-    --secondary-text: #8e8e93;
-    --card-bg: #f2f2f7;
+    --primary-color: #7c4dff;
+    /* Brighter purple for dark bg */
+    --bg-gradient: linear-gradient(to bottom, #5A2BB7, #281351);
+    --text-color: #ffffff;
+    --secondary-text: rgba(255, 255, 255, 0.7);
+    --card-bg: rgba(255, 255, 255, 0.1);
     --border-radius: 16px;
     --safe-area-bottom: env(safe-area-inset-bottom);
 }
@@ -16,13 +16,16 @@
 
 html,
 body {
-    background-color: var(--bg-color);
+    background: #281351;
+    /* Fallback */
+    background-attachment: fixed;
     min-height: 100vh;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-color);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
     color: var(--text-color);
     margin: 0;
     padding: 0;
@@ -34,19 +37,22 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: calc(16px + env(safe-area-inset-top)) clamp(20px, 15vw, 70px) 16px clamp(20px, 15vw, 70px);
+    padding: calc(45px + 16px + env(safe-area-inset-top)) 20px 16px 20px;
     position: sticky;
     top: 0;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(40, 19, 81, 0.7);
+    /* Matching the dark purple with transparency */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     z-index: 100;
 }
 
 .logo {
     font-weight: 700;
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: -0.5px;
     white-space: nowrap;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .lang-badge {
@@ -57,19 +63,20 @@ header {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid #e5e5ea;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     user-select: none;
     -webkit-user-select: none;
+    backdrop-filter: blur(5px);
 }
 
 .lang-badge:hover {
-    background: #e5e5ea;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .lang-badge:active {
     transform: scale(0.9);
-    background: #d1d1d6;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 main {
@@ -117,6 +124,8 @@ h1 {
 /* Action Cards */
 .action-card {
     background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 20px;
     border-radius: var(--border-radius);
     display: flex;
@@ -124,11 +133,12 @@ h1 {
     margin-bottom: 16px;
     cursor: pointer;
     transition: transform 0.2s ease, background 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .action-card:active {
     transform: scale(0.98);
-    background: #e5e5ea;
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .card-icon {
@@ -165,15 +175,17 @@ input {
     width: 100%;
     padding: 14px 16px;
     border-radius: 12px;
-    border: 1px solid #e5e5ea;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     background: var(--card-bg);
+    color: white;
     font-size: 16px;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 input:focus {
     border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 /* Buttons */
@@ -188,18 +200,20 @@ input:focus {
     font-weight: 700;
     cursor: pointer;
     margin-top: 10px;
+    box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
 }
 
 .secondary-btn {
     width: 100%;
-    background: #e5e5ea;
-    color: var(--text-color);
-    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 12px;
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
     margin-top: 10px;
+    backdrop-filter: blur(5px);
 }
 
 /* Bottom Nav */
@@ -208,12 +222,13 @@ input:focus {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(40, 19, 81, 0.85);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-around;
     padding: 10px 0 calc(10px + var(--safe-area-bottom));
-    border-top: 0.5px solid #d1d1d6;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.1);
     z-index: 1000;
 }
 

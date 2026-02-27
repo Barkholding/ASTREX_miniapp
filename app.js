@@ -9,8 +9,9 @@ function setupTelegramTheme() {
         }
         tg.ready();
         tg.enableClosingConfirmation();
-        tg.setHeaderColor('#ffffff');
-        tg.setBackgroundColor('#ffffff');
+        // Colors for seamless look - Matching the top of our gradient (#5A2BB7)
+        tg.setHeaderColor('#5A2BB7');
+        tg.setBackgroundColor('#281351');
     } catch (e) { console.error("TG setup error", e); }
 }
 
