@@ -128,6 +128,12 @@ async function init() {
         const response = await fetch(`${API_BASE}/api/init/${userId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
+        const data = await response.json();
+        console.log('User data received:', data);
+
+        if (data.user) userData = { ...userData, ...data.user };
+        if (data.strings) strings = data.strings;
+
         if (langBadge) {
             const currentLang = userData.language || 'ru';
             langBadge.innerText = currentLang.toUpperCase();
@@ -135,7 +141,7 @@ async function init() {
         updateUI();
     } catch (e) {
         console.warn('Init error (using local fallbacks):', e);
-        if (tg) tg.expand(); // Still try to expand
+        if (tg) tg.expand();
         updateUI();
     }
 }
@@ -147,7 +153,10 @@ function updateUI() {
     const name = tg?.initDataUnsafe?.user?.first_name || 'друг';
 
     // Header & Home
-    if (greeting) greeting.innerText = (strings.start_greeting).replace('{name}', name);
+    if (greeting) {
+        const template = strings.start_greeting || (lang === 'en' ? "Hello, {name}! 👋" : "Привет, {name}! 👋");
+        greeting.innerText = template.replace('{name}', name);
+    }
     if (langBadge) langBadge.innerText = lang.toUpperCase();
 
     const elements = {
