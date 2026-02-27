@@ -1,11 +1,19 @@
-// Robust initialization
 const tg = window.Telegram?.WebApp;
-if (tg) {
+
+function setupTelegramTheme() {
+    if (!tg) return;
     try {
         tg.expand();
         tg.ready();
-    } catch (e) { console.error("TG init error", e); }
+        tg.enableClosingConfirmation();
+
+        // Colors for seamless look
+        tg.setHeaderColor('#ffffff');
+        tg.setBackgroundColor('#ffffff');
+    } catch (e) { console.error("TG setup error", e); }
 }
+
+setupTelegramTheme();
 
 // State
 let userData = {
@@ -108,14 +116,14 @@ async function init() {
         const response = await fetch(`${API_BASE}/api/init/${userId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        const data = await response.json();
-        if (data.user) userData = data.user;
-        if (data.strings) strings = data.strings;
-
-        if (langBadge) langBadge.innerText = userData.language?.toUpperCase() || 'RU';
+        if (langBadge) {
+            const currentLang = userData.language || 'ru';
+            langBadge.innerText = currentLang.toUpperCase();
+        }
         updateUI();
     } catch (e) {
         console.warn('Init error (using local fallbacks):', e);
+        if (tg) tg.expand(); // Still try to expand
         updateUI();
     }
 }
@@ -272,20 +280,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Language Toggle
     if (langBadge) {
-        langBadge.addEventListener('click', () => {
+        langBadge.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Language badge clicked');
             const langs = ['ru', 'en', 'ka'];
-            let currentIdx = langs.indexOf(userData.language || 'ru');
+            let currentLang = userData.language || 'ru';
+            let currentIdx = langs.indexOf(currentLang);
             if (currentIdx === -1) currentIdx = 0;
+
             const nextIdx = (currentIdx + 1) % langs.length;
-            userData.language = langs[nextIdx];
+            const nextLang = langs[nextIdx];
+
+            console.log(`Switching lang from ${currentLang} to ${nextLang}`);
+            userData.language = nextLang;
+
             updateUI();
 
-            // Optionally persist to API
+            // Persist to API
             fetch(`${API_BASE}/api/personalize/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ language: userData.language })
-            }).catch(e => console.warn('Lang persistence failed', e));
+                body: JSON.stringify({ language: nextLang })
+            }).then(r => console.log('Lang saved:', r.ok))
+                .catch(e => console.warn('Lang persistence failed', e));
         });
     }
 

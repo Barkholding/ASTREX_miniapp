@@ -1,5 +1,6 @@
 :root {
-    --primary-color: #007aff; /* ASTREX Blue */
+    --primary-color: #007aff;
+    /* ASTREX Blue */
     --bg-color: #ffffff;
     --text-color: #1c1c1e;
     --secondary-text: #8e8e93;
@@ -11,6 +12,12 @@
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    background-color: var(--bg-color);
+    min-height: 100vh;
 }
 
 body {
@@ -30,7 +37,7 @@ header {
     padding: 16px 20px;
     position: sticky;
     top: 0;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     z-index: 100;
 }
@@ -43,12 +50,16 @@ header {
 
 .lang-badge {
     background: var(--card-bg);
-    padding: 4px 10px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
+    transition: all 0.2s ease;
+    border: 1px solid #e5e5ea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .lang-badge:hover {
@@ -56,7 +67,8 @@ header {
 }
 
 .lang-badge:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
+    background: #d1d1d6;
 }
 
 main {
@@ -73,8 +85,15 @@ main {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hero {
@@ -231,7 +250,7 @@ input:focus {
 #tarot-img {
     width: 200px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
 }
 
@@ -260,7 +279,9 @@ input:focus {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .back-btn {
